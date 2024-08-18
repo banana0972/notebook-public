@@ -1,0 +1,96 @@
+{# def items: List[Item], prev: Item, current: Item #}
+
+<dialog id="creation_dialog">
+    <form id="create-form">
+        <div class="field label border">
+            <input type="text" name="name">
+            <label>Folder name</label>
+        </div>
+        <div class="field label border">
+            <input type="text" name="folder_type">
+            <label>Folder type</label>
+        </div>
+        <button type="button" data-ui="#creation_dialog">Cancel</button>
+        <button type="submit" data-ui="#creation_dialog">Submit</button>
+    </form>
+    <script>
+        document.getElementById("create-form").addEventListener("submit",e => {
+            e.preventDefault()
+            const data = new FormData(e.target)
+            {% if current %}
+                data.append("parent", "{{ current.gfile['id'] }}")
+            {% endif %}
+            fetch("{{ url_for('create_folder') }}", {
+                method: "POST",
+                body: data
+            }).then(() => window.location.reload()).catch(e => alert(`Failure:\n${e}`))
+        })
+
+    </script>
+</dialog>
+<dialog id="upload_dialog">
+    <form id="upload-form">
+        <button>
+            <div class="tooltip"><span>Accepted types: .docx, .doc</span></div>
+            <i>attach_file</i>
+            <span>File</span>
+            <input type="file" name="file" accept="application/vnd.google-apps.document,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+        </button>
+        <button type="button" data-ui="#upload_dialog">Cancel</button>
+        <button type="submit" data-ui="#upload_dialog">Submit</button>
+    </form>
+    <script>
+        document.getElementById("upload-form").addEventListener("submit",e => {
+            e.preventDefault()
+            const data = new FormData(e.target)
+            {% if current %}
+                data.append("item_id", "{{ current.gfile['id'] }}")
+            {% endif %}
+            fetch("{{ url_for('upload_file') }}", {
+                method: "POST",
+                body: data
+            }).then(() => window.location.reload()).catch(e => alert(`Failure:\n${e}`))
+        })
+    </script>
+</dialog>
+<nav>
+    <button class="small-round" data-ui="#creation_dialog">
+        <i>create_new_folder</i>
+        <span>Create folder</span>
+    </button>
+    <button class="small-round" data-ui="#upload_dialog">
+        <i>upload</i>
+        <span>Upload file</span>
+    </button>
+</nav>
+<article>
+    {{ prev }}
+    {% if prev %}
+        <a href={{ url_for('item_view', item_id=prev.id)}}>
+            <i>arrow_back</i>
+        </a>
+    {% else %}
+        <a href={{ url_for('index') }}>
+            <i>home</i>
+        </a>
+    {% endif %}
+
+    <script>
+        function submitDelete(id) {
+            const data = new FormData()
+            data.append("id", id)
+            fetch("{{ url_for('delete_item') }}", {
+                method: "POST",
+                body: data
+            }).then(() => window.location.reload()).catch(e => alert(`Failure:\n${e}`))
+        }
+    </script>
+    {% for item in items %}
+        <div class="row padding {{ 'primary-container' if item == current else 'surface-container' }}">
+            <a href={{ url_for('item_view', item_id=item.id) }}>{{ item.gfile['title'] }}</a>
+            <button class="transparent circle right" onclick="submitDelete('{{ item.id }}')">
+                <i>delete</i>
+            </button>
+        </div>
+    {% endfor %}
+</article>
