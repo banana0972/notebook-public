@@ -41,7 +41,7 @@ def load_drives():
             resp, body = auth.http.request("https://www.googleapis.com/oauth2/v2/userinfo")
         except RefreshError as e:
             print("Couldnt refresh\n", e)
-            # remove_user(user)
+            remove_user(user)
             continue
         if resp.status != 200:
             print("Invalid response?", resp.status)
