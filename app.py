@@ -42,12 +42,16 @@ def require_login(f):
 
 @app.route('/')
 def index():
+    if "user" not in session:
+        return catalog.render("Index", user=None, items=[])
     root_folders = get_roots()
-    root_folders = [folder for folder in root_folders if folder.can_read(session["user"])] if session["user"] else []
+    root_folders = [folder for folder in root_folders if folder.can_read(session["user"])]
     return catalog.render("Index", user=session["user"], items=root_folders)
 
 @app.route('/<item_id>')
 def item_view(item_id: str):  # put application's code here
+    if "user" not in session:
+        return catalog.render("Index", user=None, items=[])
     item = find_file(item_id)
     if item is None:
         return redirect(url_for('index'))
