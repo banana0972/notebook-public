@@ -10,7 +10,7 @@ from jinjax import Catalog
 from pydantic import BaseModel, ValidationError
 import tomli
 
-from common import BaseFolder
+from common import BaseFolder, auth_instances
 from db import get_user, find_file, find_parent, find_children, get_roots
 from filetypes import ParentFolder, Folder, DriveFile
 
@@ -32,7 +32,7 @@ app.jinja_env.globals["cat"] = catalog
 def require_login(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if session['user'] is None:
+        if session.get("user", None) not in auth_instances:
             return Response("You are not logged in", 401)
         return f(*args, **kwargs)
     return decorated_function
@@ -42,7 +42,7 @@ def require_login(f):
 
 @app.route('/')
 def index():
-    if "user" not in session:
+    if session.get("user", None) not in auth_instances:
         return catalog.render("Index", user=None, items=[])
     root_folders = get_roots()
     root_folders = [folder for folder in root_folders if folder.can_read(session["user"])]
@@ -50,7 +50,7 @@ def index():
 
 @app.route('/<item_id>')
 def item_view(item_id: str):  # put application's code here
-    if "user" not in session:
+    if session.get("user", None) not in auth_instances:
         return catalog.render("Index", user=None, items=[])
     item = find_file(item_id)
     if item is None:
